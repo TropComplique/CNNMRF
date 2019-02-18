@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torchvision.models import vgg19
 
 
@@ -12,13 +13,15 @@ class MarkovRandomFieldLoss(nn.Module):
     def __init__(self, y, size, stride, threshold):
         """
         Arguments:
-            y: a float tensor with shape [1, c, a, b].
+            y: a list of float tensors with shape [1, c, a_i, b_i],
+                where (a_i, b_i) is the spatial size of the i-th tensor. 
             size, stride: integers, parameters of used patches.
             threshold: a float number.
         """
         super(MarkovRandomFieldLoss, self).__init__()
 
-        y = extract_patches(y.squeeze(0), size, stride)  # shape [N, c * size * size]
+        y = [extract_patches(t.squeeze(0), size, stride) for t in y]
+        y = torch.cat(y, dim=0)  # shape [N, c * size * size]
         y_normed = y/(y.norm(p=2, dim=1, keepdim=True) + EPSILON)
 
         self.y = nn.Parameter(data=y, requires_grad=False)
@@ -26,7 +29,7 @@ class MarkovRandomFieldLoss(nn.Module):
 
         self.size = size
         self.stride = stride
-        self.threshold = 1e-2
+        self.threshold = threshold
 
     def forward(self, x):
         """
@@ -51,11 +54,11 @@ class MarkovRandomFieldLoss(nn.Module):
         indices = torch.masked_select(indices, similar_enough)
         # it has shape [M'], where M' <= M
 
-        y = torch.gather(self.y, 0, indices)  # shape [M', c * size * size]
+        y = torch.index_select(self.y, 0, indices)  # shape [M', c * size * size]
         valid_indices = torch.nonzero(similar_enough).squeeze(1)  # shape [M']
-        x = torch.gather(x, 0, valid_indices)  # shape [M', c * size * size]
+        x = torch.index_select(x, 0, valid_indices)  # shape [M', c * size * size]
 
-        return torch.pow(x - y, 2).sum([0, 1])  # shape []
+        return torch.pow(x - y, 2).mean([0, 1])  # shape []
 
 
 def extract_patches(features, size, stride):
