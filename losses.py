@@ -14,7 +14,7 @@ class MarkovRandomFieldLoss(nn.Module):
         """
         Arguments:
             y: a list of float tensors with shape [1, c, a_i, b_i],
-                where (a_i, b_i) is the spatial size of the i-th tensor. 
+                where (a_i, b_i) is the spatial size of the i-th tensor.
             size, stride: integers, parameters of used patches.
             threshold: a float number.
         """
