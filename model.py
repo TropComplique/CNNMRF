@@ -35,7 +35,8 @@ class Loss(nn.Module):
         self.x = nn.Parameter(data=initial, requires_grad=True)
 
         # features
-        self.vgg = Extractor()
+        feature_names = CONTENT_LAYERS + STYLE_LAYERS
+        self.vgg = Extractor(feature_names)
         cf = self.vgg(content)
         sf = [self.vgg(s) for s in styles]
 
@@ -47,7 +48,7 @@ class Loss(nn.Module):
         self.style = nn.ModuleDict({
             n: MarkovRandomFieldLoss(
                 [sf[i][n] for i in range(len(styles))],
-                size=3, stride=1, threshold=1e-2
+                size=3, stride=1, threshold=1e-3
             )
             for n in STYLE_LAYERS
         })

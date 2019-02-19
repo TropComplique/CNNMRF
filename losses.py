@@ -122,7 +122,11 @@ class TotalVariationLoss(nn.Module):
 
 class Extractor(nn.Module):
 
-    def __init__(self):
+    def __init__(self, layers):
+        """
+        Arguments:
+            layers: a list of strings.
+        """
         super(Extractor, self).__init__()
 
         self.model = vgg19(pretrained=True).eval().features
@@ -152,8 +156,11 @@ class Extractor(nn.Module):
                 i += 1
                 j = 1
 
-        # feature names
+        # names of all features
         self.names = names
+
+        # names of features to extract
+        self.layers = list(set(layers))
 
     def forward(self, x):
         """
@@ -166,8 +173,17 @@ class Extractor(nn.Module):
         features = {}
         x = (x - self.mean)/self.std
 
+        i = 0  # number of features extracted
+        num_features = len(self.layers)
+
         for n, m in zip(self.names, self.model):
             x = m(x)
-            features[n] = x
+
+            if n in self.layers:
+                features[n] = x
+                i += 1
+
+            if i == num_features:
+                break
 
         return features
