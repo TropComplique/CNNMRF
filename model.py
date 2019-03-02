@@ -5,8 +5,8 @@ from losses import PerceptualLoss, TotalVariationLoss, MarkovRandomFieldLoss, Ex
 
 
 # names of features to use
-CONTENT_LAYERS = ['relu4_2']
-STYLE_LAYERS = ['relu3_1', 'relu4_1']
+CONTENT_LAYERS = ['relu5_1']
+STYLE_LAYERS = ['relu3_1', 'relu4_1', 'relu5_1']
 
 
 class Loss(nn.Module):
@@ -48,7 +48,7 @@ class Loss(nn.Module):
         self.style = nn.ModuleDict({
             n: MarkovRandomFieldLoss(
                 [sf[i][n] for i in range(len(styles))],
-                size=3, stride=1, threshold=1e-3
+                size=5, stride=2, threshold=1e-3
             )
             for n in STYLE_LAYERS
         })
